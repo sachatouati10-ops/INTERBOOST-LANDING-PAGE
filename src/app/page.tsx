@@ -738,27 +738,34 @@ export default function LandingPage() {
               background: "radial-gradient(ellipse at center, rgba(139,92,246,0.15) 0%, rgba(59,130,246,0.1) 40%, transparent 70%)",
               animation: "glowPulse 4s ease-in-out infinite",
             }}/>
-            {/* Floating elements */}
+            {/* Floating logos */}
             <motion.div
               animate={{ y: [0, -12, 0], rotate: [0, 5, 0] }}
               transition={{ repeat: Infinity, duration: 5, ease: "easeInOut" }}
-              className="absolute -top-6 -right-8 w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-500 to-blue-500 flex items-center justify-center shadow-xl shadow-violet-500/30 z-20"
+              className="absolute -top-10 -right-20 w-24 h-24 rounded-2xl bg-white flex items-center justify-center shadow-xl z-20 overflow-hidden p-3"
             >
-              <Sparkles className="w-6 h-6 text-white"/>
+              <img src="/indeed.jpg" alt="Indeed" className="w-full h-full object-contain"/>
             </motion.div>
             <motion.div
               animate={{ y: [0, 10, 0], rotate: [0, -5, 0] }}
               transition={{ repeat: Infinity, duration: 4, ease: "easeInOut", delay: 1 }}
-              className="absolute -bottom-4 -left-6 w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center shadow-lg shadow-cyan-500/25 z-20"
+              className="absolute -bottom-8 -left-20 w-22 h-22 rounded-2xl bg-white flex items-center justify-center shadow-lg z-20 overflow-hidden p-2.5"
             >
-              <FileText className="w-5 h-5 text-white"/>
+              <img src="/jobteaser.png" alt="JobTeaser" className="w-full h-full object-contain"/>
             </motion.div>
             <motion.div
               animate={{ y: [0, -8, 0], x: [0, 4, 0] }}
               transition={{ repeat: Infinity, duration: 6, ease: "easeInOut", delay: 2 }}
-              className="absolute top-1/3 -left-10 w-10 h-10 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/25 z-20"
+              className="absolute top-1/3 -left-24 w-20 h-20 rounded-2xl bg-white flex items-center justify-center shadow-lg z-20 p-1.5"
             >
-              <Target className="w-4 h-4 text-white"/>
+              <img src="/wttj.png" alt="Welcome to the Jungle" className="w-full h-full object-contain rounded-xl"/>
+            </motion.div>
+            <motion.div
+              animate={{ y: [0, 8, 0], x: [0, -4, 0] }}
+              transition={{ repeat: Infinity, duration: 5, ease: "easeInOut", delay: 1.5 }}
+              className="absolute top-1/4 -right-24 w-20 h-20 rounded-xl bg-white flex items-center justify-center shadow-lg z-20 overflow-hidden p-2"
+            >
+              <img src="/hellowork.svg" alt="HelloWork" className="w-full h-full object-contain"/>
             </motion.div>
 
             <motion.div
