@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   MousePointerClick,
@@ -23,6 +23,29 @@ import {
 } from "lucide-react";
 
 type FormStatus = "idle" | "loading" | "success" | "error";
+
+function CountUp() {
+  const [count, setCount] = useState(0);
+  const target = 523;
+
+  useEffect(() => {
+    let start = 0;
+    const duration = 2000;
+    const startTime = Date.now();
+    const step = () => {
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      start = Math.floor(eased * target);
+      setCount(start);
+      if (progress < 1) requestAnimationFrame(step);
+    };
+    const timeout = setTimeout(() => requestAnimationFrame(step), 800);
+    return () => clearTimeout(timeout);
+  }, []);
+
+  return <span className="text-2xl font-black bg-gradient-to-r from-violet-600 to-blue-600 bg-clip-text text-transparent">{count}</span>;
+}
 
 const jobCards = [
   {
@@ -107,17 +130,21 @@ function IPhoneApp() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [swipeDir, setSwipeDir] = useState<"left" | "right" | null>(null);
 
+  const [showPostStatus, setShowPostStatus] = useState<"liked" | "rejected" | null>(null);
+
   const triggerSwipe = useCallback(() => {
     const dir = currentIndex % 2 === 0 ? "right" : "left";
     setSwipeDir(dir);
+    setShowPostStatus(dir === "right" ? "liked" : "rejected");
     setTimeout(() => {
       setCurrentIndex((prev) => (prev + 1) % jobCards.length);
       setSwipeDir(null);
-    }, 650);
+    }, 600);
+    setTimeout(() => setShowPostStatus(null), 500);
   }, [currentIndex]);
 
   useEffect(() => {
-    const id = setInterval(triggerSwipe, 4000);
+    const id = setInterval(triggerSwipe, 1500);
     return () => clearInterval(id);
   }, [triggerSwipe]);
 
@@ -167,29 +194,35 @@ function IPhoneApp() {
                 initial={false}
                 animate={
                   exiting
-                    ? { x: swipeDir === "right" ? 280 : -280, rotate: swipeDir === "right" ? 15 : -15, opacity: 0 }
-                    : { x: idx * 3, y: idx * 6, rotate: idx * -1, scale: 1 - idx * 0.025, opacity: 1 }
+                    ? { x: swipeDir === "right" ? 250 : -250, rotateY: swipeDir === "right" ? -25 : 25, rotate: swipeDir === "right" ? 8 : -8, opacity: 0 }
+                    : { x: idx * 3, y: idx * 6, rotate: idx * -1, rotateY: 0, scale: 1 - idx * 0.025, opacity: 1 }
                 }
-                transition={{ type: "spring", stiffness: 220, damping: 26 }}
-                style={{ zIndex: 10 - idx }}
+                transition={{ type: "spring", stiffness: 100, damping: 20 }}
+                style={{ zIndex: 10 - idx, perspective: 1200 }}
               >
-                {/* Overlay LIKE/NOPE */}
+                {/* Overlay POSTULER/PASSER */}
                 <AnimatePresence>
                   {exiting && swipeDir === "right" && (
                     <motion.div className="absolute inset-0 z-20 rounded-[20px] flex items-center justify-center"
-                      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                      <motion.div className="px-5 py-2 rounded-lg border-[3px] border-emerald-500 bg-emerald-500/10 rotate-[-12deg]"
-                        initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 400 }}>
-                        <span className="text-emerald-500 font-black text-xl tracking-widest">LIKE</span>
+                      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                      style={{ background: "linear-gradient(135deg, rgba(16,185,129,0.08), rgba(16,185,129,0.15))" }}>
+                      <motion.div className="px-6 py-2.5 rounded-xl border-[3px] border-emerald-500 rotate-[-12deg]"
+                        initial={{ scale: 0, rotate: -20 }} animate={{ scale: 1, rotate: -12 }}
+                        transition={{ type: "spring", stiffness: 500, damping: 15 }}
+                        style={{ boxShadow: "0 0 20px rgba(16,185,129,0.3), 0 0 40px rgba(16,185,129,0.1)" }}>
+                        <span className="text-emerald-500 font-black text-lg tracking-[0.2em]">POSTULER</span>
                       </motion.div>
                     </motion.div>
                   )}
                   {exiting && swipeDir === "left" && (
                     <motion.div className="absolute inset-0 z-20 rounded-[20px] flex items-center justify-center"
-                      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                      <motion.div className="px-5 py-2 rounded-lg border-[3px] border-red-500 bg-red-500/10 rotate-[12deg]"
-                        initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 400 }}>
-                        <span className="text-red-500 font-black text-xl tracking-widest">NOPE</span>
+                      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                      style={{ background: "linear-gradient(135deg, rgba(239,68,68,0.08), rgba(239,68,68,0.15))" }}>
+                      <motion.div className="px-6 py-2.5 rounded-xl border-[3px] border-red-500 rotate-[12deg]"
+                        initial={{ scale: 0, rotate: 20 }} animate={{ scale: 1, rotate: 12 }}
+                        transition={{ type: "spring", stiffness: 500, damping: 15 }}
+                        style={{ boxShadow: "0 0 20px rgba(239,68,68,0.3), 0 0 40px rgba(239,68,68,0.1)" }}>
+                        <span className="text-red-500 font-black text-lg tracking-[0.2em]">PASSER</span>
                       </motion.div>
                     </motion.div>
                   )}
@@ -270,24 +303,62 @@ function IPhoneApp() {
           className={`w-[50px] h-[50px] rounded-full flex items-center justify-center shadow-md transition-colors ${
             swipeDir === "left" ? "bg-red-500 shadow-red-200" : "bg-white shadow-slate-200"
           }`}
-          animate={swipeDir === "left" ? { scale: [1, 1.2, 1] } : {}}
-          transition={{ duration: 0.25 }}
+          animate={swipeDir === "left" ? { scale: [1, 1.3, 1] } : {}}
+          transition={{ duration: 0.3 }}
         >
           <X className={`w-5 h-5 ${swipeDir === "left" ? "text-white" : "text-red-400"}`}/>
         </motion.button>
         <motion.button
-          className={`w-[56px] h-[56px] rounded-full flex items-center justify-center shadow-md transition-colors ${
-            swipeDir === "right" ? "bg-emerald-500 shadow-emerald-200" : "bg-gradient-to-br from-violet-500 to-blue-500 shadow-violet-200"
-          }`}
-          animate={swipeDir === "right" ? { scale: [1, 1.2, 1] } : {}}
-          transition={{ duration: 0.25 }}
+          className="w-[56px] h-[56px] rounded-full flex items-center justify-center bg-gradient-to-br from-violet-500 to-blue-500 shadow-md shadow-violet-200"
         >
           <CheckCircle className="w-6 h-6 text-white"/>
         </motion.button>
-        <motion.button className="w-[50px] h-[50px] rounded-full bg-white shadow-md shadow-slate-200 flex items-center justify-center">
-          <Heart className="w-5 h-5 text-amber-400"/>
+        <motion.button
+          className={`w-[50px] h-[50px] rounded-full flex items-center justify-center shadow-md transition-colors ${
+            swipeDir === "right" ? "bg-emerald-500 shadow-emerald-200" : "bg-white shadow-slate-200"
+          }`}
+          animate={swipeDir === "right" ? { scale: [1, 1.3, 1] } : {}}
+          transition={{ duration: 0.3 }}
+          style={{ boxShadow: swipeDir !== "right" ? "0 0 20px rgba(16,185,129,0.12), 0 0 40px rgba(16,185,129,0.05)" : undefined, animation: swipeDir !== "right" ? "goP 3s infinite" : undefined }}
+        >
+          <Heart className={`w-5 h-5 ${swipeDir === "right" ? "text-white" : "text-emerald-500"}`}/>
         </motion.button>
       </div>
+
+      {/* Status overlay */}
+      <AnimatePresence>
+        {showPostStatus && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none"
+          >
+            <motion.div
+              initial={{ scale: 0, rotate: showPostStatus === "liked" ? -15 : 15 }}
+              animate={{ scale: 1, rotate: showPostStatus === "liked" ? -12 : 12 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 600, damping: 18 }}
+              className={`px-8 py-3 rounded-2xl border-4 ${
+                showPostStatus === "liked"
+                  ? "border-emerald-500 bg-emerald-500/10 backdrop-blur-sm"
+                  : "border-red-500 bg-red-500/10 backdrop-blur-sm"
+              }`}
+              style={{ boxShadow: showPostStatus === "liked"
+                ? "0 0 30px rgba(16,185,129,0.3)"
+                : "0 0 30px rgba(239,68,68,0.3)"
+              }}
+            >
+              <span className={`text-2xl font-black tracking-widest ${
+                showPostStatus === "liked" ? "text-emerald-500" : "text-red-500"
+              }`}>
+                {showPostStatus === "liked" ? "POSTULÉ" : "REJETÉ"}
+              </span>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Tab bar */}
       <div className="flex items-center justify-around px-4 py-2 border-t border-slate-100 bg-white/80 backdrop-blur-md">
@@ -323,160 +394,429 @@ export default function LandingPage() {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<FormStatus>("idle");
   const [errorMsg, setErrorMsg] = useState("");
+  const [ghostText, setGhostText] = useState("");
+  const [ghostPhase, setGhostPhase] = useState<"typing" | "clicking" | "done" | "idle">("idle");
+  const [userInteracted, setUserInteracted] = useState(false);
+  const [editMode, setEditMode] = useState(false);
+  const [leftOffset, setLeftOffset] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStart = useRef({ x: 0, y: 0, ox: 0, oy: 0 });
+
+  // Load saved position
+  useEffect(() => {
+    const saved = localStorage.getItem("leftBlockOffset");
+    if (saved) setLeftOffset(JSON.parse(saved));
+  }, []);
+
+  // Ghost typing animation — once
+  useEffect(() => {
+    if (userInteracted || status === "success") return;
+    const demoEmail = "marie.dupont@gmail.com";
+    let cancelled = false;
+    const startDelay = setTimeout(() => {
+      if (cancelled) return;
+      setGhostPhase("typing");
+      let i = 0;
+      const typeInterval = setInterval(() => {
+        if (cancelled) { clearInterval(typeInterval); return; }
+        i++;
+        setGhostText(demoEmail.slice(0, i));
+        if (i >= demoEmail.length) {
+          clearInterval(typeInterval);
+          setTimeout(() => { if (!cancelled) setGhostPhase("clicking"); }, 300);
+          setTimeout(() => { if (!cancelled) setGhostPhase("done"); }, 600);
+          // Efface puis remet le placeholder
+          setTimeout(() => {
+            if (cancelled) return;
+            setGhostText("");
+            setGhostPhase("idle");
+          }, 900);
+        }
+      }, 70);
+    }, 1500);
+    return () => { cancelled = true; clearTimeout(startDelay); };
+  }, [userInteracted, status]);
 
   const isValidEmail = (e: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+
+  const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwajbNbnkiuykNz4OU82Q99u0iZfyY70FRfMTDYibp_amxpuhYGT5hKVPGkak9RoRuv/exec";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg("");
     if (!isValidEmail(email)) { setErrorMsg("Merci d'entrer une adresse email valide."); setStatus("error"); return; }
     setStatus("loading");
-    // TODO: brancher l'API
-    setTimeout(() => { console.log("Inscription:", { email }); setStatus("success"); }, 1200);
+    try {
+      const res = await fetch("/api/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      if (!res.ok) throw new Error();
+      setStatus("success");
+    } catch {
+      setErrorMsg("Une erreur est survenue. Réessayez.");
+      setStatus("error");
+    }
   };
 
   return (
-    <main className="relative min-h-screen bg-slate-50 overflow-hidden">
-      <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] rounded-full bg-violet-200/40 blur-[120px] pointer-events-none"/>
-      <div className="absolute bottom-[-15%] right-[-5%] w-[500px] h-[500px] rounded-full bg-blue-200/30 blur-[100px] pointer-events-none"/>
+    <main className="relative min-h-screen bg-gradient-to-br from-slate-50 via-white to-violet-50/30 overflow-hidden">
+      {/* Fond blanc avec grille animée subtile */}
+      <div className="absolute inset-0 pointer-events-none" style={{
+        backgroundImage: "radial-gradient(circle, rgba(139,92,246,0.08) 1px, transparent 1px)",
+        backgroundSize: "40px 40px",
+      }}/>
+      <motion.div
+        animate={{ y: [0, -40] }}
+        transition={{ repeat: Infinity, duration: 10, ease: "linear" }}
+        className="absolute inset-0 pointer-events-none opacity-40"
+        style={{
+          backgroundImage: "radial-gradient(circle, rgba(99,102,241,0.12) 1px, transparent 1px)",
+          backgroundSize: "40px 40px",
+          height: "200%",
+        }}
+      />
 
-      <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8 py-12 lg:py-16 grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-20 items-center">
+      <div className="relative z-10 max-w-7xl mx-auto px-5 md:px-6 lg:px-8 py-6 md:py-12 lg:py-16 grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-10 lg:gap-20 items-center min-h-screen">
         {/* GAUCHE */}
+        <div
+          style={{ transform: `translate(${leftOffset.x}px, ${leftOffset.y}px)`, transition: isDragging ? "none" : "transform 0.2s" }}
+          className={editMode ? "ring-2 ring-dashed ring-violet-500 rounded-2xl relative cursor-move select-none" : ""}
+          onMouseDown={(e) => {
+            if (!editMode) return;
+            e.preventDefault();
+            setIsDragging(true);
+            dragStart.current = { x: e.clientX, y: e.clientY, ox: leftOffset.x, oy: leftOffset.y };
+            const onMove = (ev: MouseEvent) => {
+              setLeftOffset({
+                x: dragStart.current.ox + (ev.clientX - dragStart.current.x),
+                y: dragStart.current.oy + (ev.clientY - dragStart.current.y),
+              });
+            };
+            const onUp = () => {
+              setIsDragging(false);
+              window.removeEventListener("mousemove", onMove);
+              window.removeEventListener("mouseup", onUp);
+            };
+            window.addEventListener("mousemove", onMove);
+            window.addEventListener("mouseup", onUp);
+          }}
+        >
         <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-violet-100 text-violet-700 text-sm font-medium mb-6">
-            <Rocket className="w-4 h-4"/>
-            Bientôt disponible
+
+          {/* --- MOBILE ONLY --- */}
+          <div className="md:hidden flex flex-col items-center">
+            <motion.h1
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+              className="text-[38px] font-extrabold tracking-tight text-slate-900 leading-[1.08] text-center mb-3"
+            >
+              Swipez. Postulez.<br/>
+              <span className="bg-gradient-to-r from-violet-600 via-blue-600 to-cyan-500 bg-clip-text text-transparent">Décrochez.</span>
+            </motion.h1>
+
+            <motion.p
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.35 }}
+              className="text-[15px] text-slate-900 text-center leading-relaxed px-4 mt-3 mb-2"
+            >
+              Un swipe et l&apos;IA s&apos;occupe de tout&nbsp;: CV adapté, lettre sur-mesure et candidature envoyée.
+            </motion.p>
           </div>
 
-          <h1 className="text-4xl md:text-5xl lg:text-[3.5rem] font-bold tracking-tight text-slate-900 leading-[1.08] mb-5">
-            Swipez. Postulez.{" "}
-            <span className="bg-gradient-to-r from-violet-600 to-blue-600 bg-clip-text text-transparent">Décrochez.</span>
-          </h1>
-
-          <p className="text-lg text-slate-600 leading-relaxed mb-8 max-w-lg">
-            Interboost automatise votre CV et votre lettre de motivation, personnalisés pour chaque offre. Vous n&apos;avez qu&apos;à swiper.
-          </p>
-
-          {/* Email CTA */}
-          <div className="mb-6">
-            {status === "success" ? (
+          {/* --- DESKTOP ONLY: badge + titre --- */}
+          <div className="hidden md:block">
+            <div className="flex justify-start">
               <motion.div
-                initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-                className="flex items-center gap-4 bg-emerald-50 rounded-3xl border-2 border-emerald-300 p-6"
+                initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.5, delay: 0.1 }}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-violet-100 to-blue-100 text-violet-700 text-sm font-semibold mb-8 border border-violet-200/50 shadow-sm"
               >
-                <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 2 }}>
-                  <CheckCircle className="w-8 h-8 text-emerald-500"/>
+                <motion.div animate={{ rotate: [0, 15, -10, 0] }} transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}>
+                  <Rocket className="w-4 h-4"/>
                 </motion.div>
-                <div>
-                  <p className="text-lg font-bold text-emerald-800">Vous êtes sur la liste !</p>
-                  <p className="text-sm text-emerald-600 mt-0.5">On vous envoie un email dès le lancement.</p>
-                </div>
+                Bientôt disponible
               </motion.div>
-            ) : (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: 0.7 }}
-                className="relative rounded-3xl p-[2px] overflow-hidden"
-              >
-                {/* Animated gradient border */}
-                <div className="absolute inset-0 rounded-3xl" style={{
-                  background: "linear-gradient(135deg, #8b5cf6, #3b82f6, #06b6d4, #8b5cf6)",
-                  backgroundSize: "300% 300%",
-                  animation: "gradientShift 4s ease infinite",
-                }}/>
-                <div className="relative bg-white rounded-[22px] p-6">
-                  <div className="flex items-center gap-3 mb-4">
-                    <motion.div
-                      animate={{ rotate: [0, -10, 10, 0], scale: [1, 1.1, 1] }}
-                      transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
-                      className="w-12 h-12 rounded-2xl bg-gradient-to-br from-violet-500 via-blue-500 to-cyan-400 flex items-center justify-center shadow-lg shadow-violet-500/30"
-                    >
-                      <Rocket className="w-6 h-6 text-white"/>
-                    </motion.div>
-                    <div>
-                      <p className="text-xl font-bold text-slate-900">Rejoignez l&apos;aventure</p>
-                      <p className="text-sm text-slate-500">Accès prioritaire + offres exclusives</p>
-                    </div>
-                  </div>
-                  <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row items-stretch gap-3">
-                    <div className="relative flex-1">
-                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-violet-400"/>
-                      <input type="email" required value={email}
-                        onChange={(e) => { setEmail(e.target.value); if (status === "error") setStatus("idle"); }}
-                        placeholder="votreadresse@email.com" aria-label="Adresse email"
-                        className="w-full pl-12 pr-4 py-4 rounded-2xl border-2 border-slate-200 bg-slate-50 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-violet-500/20 focus:border-violet-400 text-base transition-all"
-                      />
-                    </div>
-                    <motion.button type="submit" disabled={status === "loading"}
-                      whileHover={{ scale: 1.03, y: -2 }}
-                      whileTap={{ scale: 0.97 }}
-                      className="px-8 py-4 rounded-2xl font-bold text-white text-base bg-gradient-to-r from-violet-600 via-blue-600 to-cyan-500 shadow-xl shadow-violet-500/30 transition-all disabled:opacity-70 whitespace-nowrap"
-                    >
-                      {status === "loading" ? <Loader2 className="w-5 h-5 animate-spin mx-auto"/> : "Rejoindre la liste →"}
-                    </motion.button>
-                  </form>
-                  {status === "error" && errorMsg && <p className="text-sm text-red-500 mt-3 font-medium">{errorMsg}</p>}
-                  <div className="flex items-center gap-3 mt-4">
-                    <span className="inline-flex items-center gap-1.5 text-sm text-slate-500 font-medium">
-                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"/>+500 inscrits
-                    </span>
-                    <span className="text-slate-300">|</span>
-                    <span className="text-sm text-slate-400">100% gratuit, zéro spam</span>
-                  </div>
-                </div>
-              </motion.div>
-            )}
+            </div>
+
+            <h1 className="text-5xl lg:text-[3.5rem] font-extrabold tracking-tight text-slate-900 leading-[1.08] mb-5">
+              Swipez. Postulez.{" "}
+              <span className="bg-gradient-to-r from-violet-600 via-blue-600 to-cyan-500 bg-clip-text text-transparent">Décrochez.</span>
+            </h1>
           </div>
 
-          {/* 4 points */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-8">
+          {/* 4 cartes desktop uniquement */}
+          <div className="hidden md:grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10 mt-8 max-w-lg">
             {[
               { icon: MousePointerClick, title: "Swipe = candidature", desc: "Un geste suffit pour postuler à une offre." },
+              { icon: Rocket, title: "Candidature automatisée", desc: "Tout est envoyé automatiquement pour vous." },
               { icon: FileText, title: "CV adapté par l'IA", desc: "Votre CV ajusté aux mots-clés de chaque offre." },
               { icon: Sparkles, title: "Lettre sur-mesure", desc: "Une LM personnalisée pour chaque entreprise." },
-              { icon: Target, title: "Matching intelligent", desc: "Seules les offres pertinentes apparaissent." },
             ].map((item, i) => (
-              <motion.div key={i} className="flex gap-3" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.8 + i * 0.1 }}>
-                <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-violet-100 to-blue-100 flex items-center justify-center">
-                  <item.icon className="w-5 h-5 text-violet-600"/>
+              <motion.div key={i}
+                initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: 0.3 + i * 0.1 }}
+                className="flex gap-3 group"
+              >
+                <div className="flex-shrink-0 w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500/15 to-blue-500/15 border border-violet-300/60 flex items-center justify-center group-hover:from-violet-500/25 group-hover:to-blue-500/25 transition-all shadow-sm">
+                  <item.icon className="w-5 h-5 text-violet-700"/>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-slate-900 text-sm mb-0.5">{item.title}</h3>
-                  <p className="text-xs text-slate-500 leading-relaxed">{item.desc}</p>
+                  <h3 className="font-bold text-slate-900 text-sm mb-0.5">{item.title}</h3>
+                  <p className="text-xs text-slate-600 leading-relaxed">{item.desc}</p>
                 </div>
               </motion.div>
             ))}
           </div>
+
+          {/* Email CTA */}
+          <motion.div
+            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.7, delay: 0.6, type: "spring", stiffness: 180 }}
+            className="relative"
+          >
+            {status === "success" ? (
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+                className="flex items-center gap-3 bg-emerald-50 rounded-2xl border border-emerald-200 p-6"
+              >
+                <CheckCircle className="w-6 h-6 text-emerald-500"/>
+                <p className="text-sm font-semibold text-emerald-700">Vous êtes sur la liste ! On vous contacte au lancement.</p>
+              </motion.div>
+            ) : (
+              <>
+                {/* ===== MOBILE CTA ===== */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ duration: 0.6, delay: 0.55, type: "spring", stiffness: 180 }}
+                  className="md:hidden mt-5"
+                >
+
+                  {/* Input email full width */}
+                  <form onSubmit={handleSubmit} className="relative flex flex-col gap-3">
+                    <div className="relative">
+                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-violet-400"/>
+                      {!userInteracted && ghostText && (
+                        <div className="absolute inset-0 flex items-center pl-11 pr-3 pointer-events-none">
+                          <span className="text-[14px] text-slate-900">{ghostText}</span>
+                          <motion.span animate={{ opacity: [1, 0] }} transition={{ repeat: Infinity, duration: 0.6 }} className="w-[2px] h-4 bg-violet-500 ml-[1px]"/>
+                          <span className="ml-auto text-[9px] text-slate-900 font-medium"><CountUp /> inscrits</span>
+                        </div>
+                      )}
+                      <input type="email" required value={email}
+                        onChange={(e) => { setEmail(e.target.value); setUserInteracted(true); if (status === "error") setStatus("idle"); }}
+                        onFocus={() => setUserInteracted(true)}
+                        placeholder={userInteracted || ghostText ? "" : "votreadresse@email.com"}
+                        aria-label="Adresse email"
+                        className="w-full pl-11 pr-4 py-3 rounded-2xl border-2 border-violet-200/60 bg-white/80 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400 text-[14px] transition-all shadow-sm"
+                      />
+                    </div>
+                    <motion.button type="submit" disabled={status === "loading"}
+                      whileTap={{ scale: 0.97 }}
+                      animate={ghostPhase === "clicking"
+                        ? { scale: [1, 0.94, 1.03, 1], boxShadow: "0 6px 30px -4px rgba(59,130,246,0.6)" }
+                        : { boxShadow: ["0 6px 20px -4px rgba(139,92,246,0.4)", "0 6px 28px -4px rgba(59,130,246,0.5)", "0 6px 20px -4px rgba(139,92,246,0.4)"] }
+                      }
+                      transition={ghostPhase === "clicking"
+                        ? { duration: 0.4 }
+                        : { boxShadow: { repeat: Infinity, duration: 2, ease: "easeInOut" } }
+                      }
+                      className="w-full py-3 rounded-2xl font-bold text-white text-[15px] bg-gradient-to-r from-violet-600 via-blue-600 to-cyan-500 disabled:opacity-70 shadow-xl shadow-violet-500/25"
+                    >
+                      {status === "loading" ? <Loader2 className="w-5 h-5 animate-spin mx-auto"/> : "Rejoindre l'aventure"}
+                    </motion.button>
+                  </form>
+                  {status === "error" && errorMsg && <p className="text-xs text-red-500 mt-2 text-center">{errorMsg}</p>}
+
+                  <p className="text-[10px] text-slate-400 mt-3 text-center">Accès prioritaire · Gratuit · Sans spam</p>
+                </motion.div>
+
+                {/* ===== DESKTOP CTA ===== */}
+                <div className="hidden md:block">
+                  {/* Glow derrière */}
+                  <div className="absolute -inset-3 rounded-[28px] pointer-events-none" style={{
+                    background: "linear-gradient(135deg, rgba(139,92,246,0.25), rgba(59,130,246,0.2), rgba(6,182,212,0.15))",
+                    backgroundSize: "200% 200%",
+                    animation: "glowPulse 3s ease-in-out infinite, gradientShift 4s ease infinite",
+                    filter: "blur(20px)",
+                  }}/>
+
+                  {/* Bordure gradient animée */}
+                  <div className="relative rounded-[24px] p-[2.5px] overflow-hidden">
+                    <div className="absolute inset-0 rounded-[24px]" style={{
+                      background: "linear-gradient(135deg, #8b5cf6, #3b82f6, #06b6d4, #a855f7, #8b5cf6)",
+                      backgroundSize: "400% 400%",
+                      animation: "gradientShift 3s ease infinite",
+                    }}/>
+
+                    <div className="relative bg-white rounded-[22px] px-6 py-5 overflow-hidden">
+                      {/* Shimmer dégradé */}
+                      <motion.div
+                        className="absolute inset-0 pointer-events-none z-10 rounded-[22px]"
+                        style={{
+                          background: "linear-gradient(105deg, transparent, rgba(139,92,246,0.08), rgba(59,130,246,0.12), rgba(6,182,212,0.08), transparent)",
+                          backgroundSize: "200% 100%",
+                        }}
+                        animate={{ backgroundPositionX: ["100%", "-100%"], opacity: [0, 1, 1, 0] }}
+                        transition={{ duration: 3, repeat: Infinity, repeatDelay: 8, ease: "easeInOut" }}
+                      />
+
+                      <div className="relative mb-4">
+                        <p className="text-xl font-extrabold text-slate-900 mb-3 lg:text-left">Rejoignez l&apos;aventure</p>
+                        <div className="flex items-center gap-3 lg:justify-start">
+                          <div className="flex -space-x-2">
+                            {["#8b5cf6", "#3b82f6", "#06b6d4", "#f59e0b"].map((color, i) => (
+                              <motion.div key={i} initial={{ scale: 0, x: -10 }} animate={{ scale: 1, x: 0 }}
+                                transition={{ delay: 1 + i * 0.1, type: "spring", stiffness: 300 }}
+                                className="w-7 h-7 rounded-full border-2 border-white flex items-center justify-center text-[10px] font-bold text-white"
+                                style={{ background: color, zIndex: 4 - i }}>{["S", "A", "M", "L"][i]}</motion.div>
+                            ))}
+                            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 1.4, type: "spring", stiffness: 300 }}
+                              className="w-7 h-7 rounded-full border-2 border-white bg-slate-100 flex items-center justify-center text-[9px] font-bold text-slate-500">+</motion.div>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <motion.div animate={{ scale: [1, 1.4, 1] }} transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+                              className="w-2 h-2 rounded-full bg-emerald-400"/>
+                            <span className="text-sm font-bold text-slate-700"><CountUp /> personnes attendent</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Form */}
+                      <form onSubmit={handleSubmit} className="relative flex items-center gap-3">
+                        <div className="relative flex-1">
+                          <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-violet-400"/>
+                          {!userInteracted && ghostText && (
+                            <div className="absolute inset-0 flex items-center pl-12 pr-4 pointer-events-none">
+                              <span className="text-base text-slate-900">{ghostText}</span>
+                              <motion.span animate={{ opacity: [1, 0] }} transition={{ repeat: Infinity, duration: 0.6 }} className="w-[2px] h-5 bg-violet-500 ml-[1px]"/>
+                            </div>
+                          )}
+                          <input type="email" required value={email}
+                            onChange={(e) => { setEmail(e.target.value); setUserInteracted(true); if (status === "error") setStatus("idle"); }}
+                            onFocus={() => setUserInteracted(true)}
+                            placeholder={userInteracted || ghostText ? "" : "votreadresse@email.com"}
+                            aria-label="Adresse email"
+                            className="w-full pl-12 pr-4 py-4 rounded-xl border-2 border-violet-200 bg-violet-50/40 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-violet-500/15 focus:border-violet-400 text-base transition-all"
+                          />
+                        </div>
+                        <motion.button type="submit" disabled={status === "loading"}
+                          whileHover={{ scale: 1.05, y: -2 }}
+                          whileTap={{ scale: 0.95 }}
+                          animate={ghostPhase === "clicking"
+                            ? { scale: [1, 0.92, 1.05, 1], boxShadow: "0 8px 35px -5px rgba(59,130,246,0.6)" }
+                            : { boxShadow: ["0 8px 25px -5px rgba(139,92,246,0.4)", "0 8px 35px -5px rgba(59,130,246,0.5)", "0 8px 25px -5px rgba(139,92,246,0.4)"] }
+                          }
+                          transition={ghostPhase === "clicking"
+                            ? { duration: 0.4 }
+                            : { boxShadow: { repeat: Infinity, duration: 2, ease: "easeInOut" } }
+                          }
+                          className="px-8 py-4 rounded-xl font-bold text-white text-lg bg-gradient-to-r from-violet-600 via-blue-600 to-cyan-500 transition-all disabled:opacity-70 whitespace-nowrap"
+                        >
+                          {status === "loading" ? <Loader2 className="w-5 h-5 animate-spin"/> : "Rejoindre →"}
+                        </motion.button>
+                      </form>
+                      {status === "error" && errorMsg && <p className="text-xs text-red-500 mt-2">{errorMsg}</p>}
+                      <p className="relative text-[11px] text-slate-400 mt-3 lg:text-left">Accès prioritaire · Gratuit · Sans spam</p>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+          </motion.div>
+
         </motion.div>
+        </div>
 
         {/* DROITE — iPhone */}
-        <motion.div className="flex justify-center" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.2 }}>
-          <div
-            className="relative"
-            style={{
-              width: 280,
-              height: 580,
-              borderRadius: 44,
-              background: "#1a1a1a",
-              padding: 8,
-              boxShadow: "0 25px 60px -12px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.1) inset, 0 0 0 2px rgba(0,0,0,0.5)",
-            }}
-          >
-            {/* Reflet */}
-            <div className="absolute inset-0 rounded-[44px] pointer-events-none z-10"
-              style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.12) 0%, transparent 40%)" }}/>
-            {/* Boutons physiques */}
-            <div className="absolute -right-[2.5px] top-[100px] w-[3px] h-[32px] rounded-l-sm" style={{ background: "#333" }}/>
-            <div className="absolute -right-[2.5px] top-[142px] w-[3px] h-[32px] rounded-l-sm" style={{ background: "#333" }}/>
-            <div className="absolute -left-[2.5px] top-[80px] w-[3px] h-[24px] rounded-r-sm" style={{ background: "#333" }}/>
-            <div className="absolute -left-[2.5px] top-[120px] w-[3px] h-[44px] rounded-r-sm" style={{ background: "#333" }}/>
-            {/* Écran */}
-            <div className="w-full h-full rounded-[36px] overflow-hidden">
-              <IPhoneApp />
-            </div>
+        <motion.div className="flex justify-center order-last lg:order-none" initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.3, type: "spring", stiffness: 120 }}>
+          <div className="relative scale-[0.55] -translate-y-[15px] -my-[180px] md:scale-100 md:my-0 md:translate-y-0 origin-center">
+            {/* Glow derrière le phone */}
+            <div className="absolute -inset-10 rounded-full pointer-events-none" style={{
+              background: "radial-gradient(ellipse at center, rgba(139,92,246,0.15) 0%, rgba(59,130,246,0.1) 40%, transparent 70%)",
+              animation: "glowPulse 4s ease-in-out infinite",
+            }}/>
+            {/* Floating elements */}
+            <motion.div
+              animate={{ y: [0, -12, 0], rotate: [0, 5, 0] }}
+              transition={{ repeat: Infinity, duration: 5, ease: "easeInOut" }}
+              className="absolute -top-6 -right-8 w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-500 to-blue-500 flex items-center justify-center shadow-xl shadow-violet-500/30 z-20"
+            >
+              <Sparkles className="w-6 h-6 text-white"/>
+            </motion.div>
+            <motion.div
+              animate={{ y: [0, 10, 0], rotate: [0, -5, 0] }}
+              transition={{ repeat: Infinity, duration: 4, ease: "easeInOut", delay: 1 }}
+              className="absolute -bottom-4 -left-6 w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center shadow-lg shadow-cyan-500/25 z-20"
+            >
+              <FileText className="w-5 h-5 text-white"/>
+            </motion.div>
+            <motion.div
+              animate={{ y: [0, -8, 0], x: [0, 4, 0] }}
+              transition={{ repeat: Infinity, duration: 6, ease: "easeInOut", delay: 2 }}
+              className="absolute top-1/3 -left-10 w-10 h-10 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/25 z-20"
+            >
+              <Target className="w-4 h-4 text-white"/>
+            </motion.div>
+
+            <motion.div
+              animate={{ y: [0, -6, 0] }}
+              transition={{ repeat: Infinity, duration: 5, ease: "easeInOut" }}
+              className="relative"
+              style={{
+                width: 300,
+                height: 620,
+                borderRadius: 46,
+                background: "linear-gradient(145deg, #2a2a2a, #1a1a1a, #111)",
+                padding: 8,
+                boxShadow: "0 30px 80px -15px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.1) inset, 0 0 0 2px rgba(0,0,0,0.5), 0 0 60px -20px rgba(139,92,246,0.15)",
+              }}
+            >
+              {/* Reflet */}
+              <div className="absolute inset-0 rounded-[46px] pointer-events-none z-10"
+                style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 50%)" }}/>
+              {/* Boutons physiques */}
+              <div className="absolute -right-[2.5px] top-[100px] w-[3px] h-[32px] rounded-l-sm" style={{ background: "linear-gradient(180deg, #444, #333)" }}/>
+              <div className="absolute -right-[2.5px] top-[142px] w-[3px] h-[32px] rounded-l-sm" style={{ background: "linear-gradient(180deg, #444, #333)" }}/>
+              <div className="absolute -left-[2.5px] top-[80px] w-[3px] h-[24px] rounded-r-sm" style={{ background: "linear-gradient(180deg, #444, #333)" }}/>
+              <div className="absolute -left-[2.5px] top-[120px] w-[3px] h-[44px] rounded-r-sm" style={{ background: "linear-gradient(180deg, #444, #333)" }}/>
+              {/* Écran */}
+              <div className="w-full h-full rounded-[36px] overflow-hidden">
+                <IPhoneApp />
+              </div>
+            </motion.div>
           </div>
         </motion.div>
       </div>
+
+      {/* Edit mode toggle — desktop only */}
+      <button
+        onClick={() => {
+          if (editMode) {
+            // Save position to localStorage
+            localStorage.setItem("leftBlockOffset", JSON.stringify(leftOffset));
+          }
+          setEditMode(!editMode);
+        }}
+        className={`hidden md:block fixed top-4 right-4 z-50 px-4 py-2 rounded-xl text-sm font-semibold shadow-lg transition-all ${
+          editMode
+            ? "bg-emerald-500 text-white hover:bg-emerald-600"
+            : "bg-white/80 backdrop-blur-sm text-slate-700 border border-slate-200 hover:bg-white"
+        }`}
+      >
+        {editMode ? "Sauvegarder" : "Mode édition"}
+      </button>
+
+      {editMode && (
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-violet-600 text-white px-4 py-2 rounded-xl text-sm font-medium shadow-lg flex items-center gap-2">
+          <span>Glissez le bloc de gauche pour le repositionner</span>
+          <button onClick={() => { setLeftOffset({ x: 0, y: 0 }); }} className="ml-2 px-2 py-0.5 rounded bg-white/20 text-xs hover:bg-white/30 transition-all">Reset</button>
+        </div>
+      )}
     </main>
   );
 }
