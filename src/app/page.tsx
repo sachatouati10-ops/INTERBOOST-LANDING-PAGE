@@ -593,7 +593,7 @@ export default function LandingPage() {
                   initial={{ opacity: 0, y: 20, scale: 0.95 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   transition={{ duration: 0.6, delay: 0.55, type: "spring", stiffness: 180 }}
-                  className="md:hidden mt-5"
+                  className="md:hidden mt-3"
                 >
 
                   {/* Input email full width */}
@@ -632,7 +632,6 @@ export default function LandingPage() {
                   </form>
                   {status === "error" && errorMsg && <p className="text-xs text-red-500 mt-2 text-center">{errorMsg}</p>}
 
-                  <p className="text-[10px] text-slate-400 mt-3 text-center">Accès prioritaire · Gratuit · Sans spam</p>
                 </motion.div>
 
                 {/* ===== DESKTOP CTA ===== */}
@@ -721,7 +720,6 @@ export default function LandingPage() {
                         </motion.button>
                       </form>
                       {status === "error" && errorMsg && <p className="text-xs text-red-500 mt-2">{errorMsg}</p>}
-                      <p className="relative text-[11px] text-slate-400 mt-3 lg:text-left">Accès prioritaire · Gratuit · Sans spam</p>
                     </div>
                   </div>
                 </div>
