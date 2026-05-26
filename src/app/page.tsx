@@ -514,7 +514,7 @@ export default function LandingPage() {
               className="text-[38px] font-extrabold tracking-tight text-slate-900 leading-[1.08] text-center mb-3"
             >
               Swipez. Postulez.<br/>
-              <span className="bg-gradient-to-r from-violet-600 via-blue-600 to-cyan-500 bg-clip-text text-transparent">Décrochez.</span>
+              <span className="bg-gradient-to-r from-violet-600 via-blue-600 to-cyan-500 bg-clip-text text-transparent">Décrochez votre job.</span>
             </motion.h1>
 
             <motion.p
@@ -543,7 +543,7 @@ export default function LandingPage() {
 
             <h1 className="text-5xl lg:text-[3.5rem] font-extrabold tracking-tight text-slate-900 leading-[1.08] mb-5">
               Swipez. Postulez.{" "}
-              <span className="bg-gradient-to-r from-violet-600 via-blue-600 to-cyan-500 bg-clip-text text-transparent">Décrochez.</span>
+              <span className="bg-gradient-to-r from-violet-600 via-blue-600 to-cyan-500 bg-clip-text text-transparent">Décrochez votre job.</span>
             </h1>
           </div>
 
