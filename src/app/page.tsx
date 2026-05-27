@@ -461,7 +461,7 @@ export default function LandingPage() {
   };
 
   return (
-    <main className="relative h-screen bg-gradient-to-br from-slate-50 via-white to-violet-50/30 overflow-hidden">
+    <main className="relative bg-gradient-to-br from-slate-50 via-white to-violet-50/30 overflow-hidden" style={{ height: "100dvh" }}>
       {/* Fond blanc avec grille animée subtile */}
       <div className="absolute inset-0 pointer-events-none" style={{
         backgroundImage: "radial-gradient(circle, rgba(139,92,246,0.08) 1px, transparent 1px)",
@@ -478,7 +478,7 @@ export default function LandingPage() {
         }}
       />
 
-      <div className="relative z-10 max-w-7xl mx-auto px-5 md:px-6 lg:px-8 py-6 md:py-12 lg:py-16 grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-10 lg:gap-20 items-center h-screen">
+      <div className="relative z-10 max-w-7xl mx-auto px-5 md:px-6 lg:px-8 py-4 md:py-12 lg:py-16 grid grid-cols-1 lg:grid-cols-2 gap-2 md:gap-10 lg:gap-20 items-center" style={{ height: "100dvh" }}>
         {/* GAUCHE */}
         <div
           style={{ transform: `translate(${leftOffset.x}px, ${leftOffset.y}px)`, transition: isDragging ? "none" : "transform 0.2s" }}
@@ -511,7 +511,7 @@ export default function LandingPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.1 }}
-              className="text-[38px] font-extrabold tracking-tight text-slate-900 leading-[1.08] text-center mb-3"
+              className="text-[clamp(28px,8vw,38px)] font-extrabold tracking-tight text-slate-900 leading-[1.08] text-center mb-2"
             >
               Swipez. Postulez.<br/>
               <span className="bg-gradient-to-r from-violet-600 via-blue-600 to-cyan-500 bg-clip-text text-transparent">Décrochez votre job.</span>
@@ -521,7 +521,7 @@ export default function LandingPage() {
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.35 }}
-              className="text-[15px] text-slate-900 text-center leading-relaxed px-4 mt-3 mb-2"
+              className="text-[clamp(12px,3.5vw,15px)] text-slate-900 text-center leading-relaxed px-4 mt-2 mb-1"
             >
               Un swipe et l&apos;IA s&apos;occupe de tout&nbsp;: CV adapté, lettre sur-mesure et candidature envoyée.
             </motion.p>
@@ -593,7 +593,7 @@ export default function LandingPage() {
                   initial={{ opacity: 0, y: 20, scale: 0.95 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   transition={{ duration: 0.6, delay: 0.55, type: "spring", stiffness: 180 }}
-                  className="md:hidden mt-3"
+                  className="md:hidden mt-2"
                 >
 
                   {/* Input email full width */}
@@ -732,7 +732,7 @@ export default function LandingPage() {
 
         {/* DROITE — iPhone */}
         <motion.div className="flex justify-center order-last lg:order-none" initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.3, type: "spring", stiffness: 120 }}>
-          <div className="relative scale-[0.55] -translate-y-[15px] -my-[180px] md:scale-100 md:my-0 md:translate-y-0 origin-center">
+          <div className="relative scale-[0.4] -my-[200px] sm:scale-[0.5] sm:-my-[170px] md:scale-100 md:my-0 md:translate-y-0 origin-center">
             {/* Glow derrière le phone */}
             <div className="absolute -inset-10 rounded-full pointer-events-none" style={{
               background: "radial-gradient(ellipse at center, rgba(139,92,246,0.15) 0%, rgba(59,130,246,0.1) 40%, transparent 70%)",
