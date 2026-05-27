@@ -732,7 +732,7 @@ export default function LandingPage() {
 
         {/* DROITE — iPhone */}
         <motion.div className="flex justify-center order-last lg:order-none" initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.3, type: "spring", stiffness: 120 }}>
-          <div className="relative scale-[0.4] -my-[200px] sm:scale-[0.5] sm:-my-[170px] md:scale-100 md:my-0 md:translate-y-0 origin-center">
+          <div className="relative scale-[0.5] -my-[170px] sm:scale-[0.55] sm:-my-[150px] md:scale-100 md:my-0 md:translate-y-0 origin-center">
             {/* Glow derrière le phone */}
             <div className="absolute -inset-10 rounded-full pointer-events-none" style={{
               background: "radial-gradient(ellipse at center, rgba(139,92,246,0.15) 0%, rgba(59,130,246,0.1) 40%, transparent 70%)",
