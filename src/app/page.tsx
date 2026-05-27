@@ -798,30 +798,6 @@ export default function LandingPage() {
         </motion.div>
       </div>
 
-      {/* Edit mode toggle — desktop only */}
-      <button
-        onClick={() => {
-          if (editMode) {
-            // Save position to localStorage
-            localStorage.setItem("leftBlockOffset", JSON.stringify(leftOffset));
-          }
-          setEditMode(!editMode);
-        }}
-        className={`hidden md:block fixed top-4 right-4 z-50 px-4 py-2 rounded-xl text-sm font-semibold shadow-lg transition-all ${
-          editMode
-            ? "bg-emerald-500 text-white hover:bg-emerald-600"
-            : "bg-white/80 backdrop-blur-sm text-slate-700 border border-slate-200 hover:bg-white"
-        }`}
-      >
-        {editMode ? "Sauvegarder" : "Mode édition"}
-      </button>
-
-      {editMode && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-violet-600 text-white px-4 py-2 rounded-xl text-sm font-medium shadow-lg flex items-center gap-2">
-          <span>Glissez le bloc de gauche pour le repositionner</span>
-          <button onClick={() => { setLeftOffset({ x: 0, y: 0 }); }} className="ml-2 px-2 py-0.5 rounded bg-white/20 text-xs hover:bg-white/30 transition-all">Reset</button>
-        </div>
-      )}
     </main>
   );
 }
