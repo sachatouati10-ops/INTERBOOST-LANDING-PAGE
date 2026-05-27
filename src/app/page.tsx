@@ -461,7 +461,7 @@ export default function LandingPage() {
   };
 
   return (
-    <main className="relative min-h-screen bg-gradient-to-br from-slate-50 via-white to-violet-50/30 overflow-hidden">
+    <main className="relative h-screen bg-gradient-to-br from-slate-50 via-white to-violet-50/30 overflow-hidden">
       {/* Fond blanc avec grille animée subtile */}
       <div className="absolute inset-0 pointer-events-none" style={{
         backgroundImage: "radial-gradient(circle, rgba(139,92,246,0.08) 1px, transparent 1px)",
@@ -478,7 +478,7 @@ export default function LandingPage() {
         }}
       />
 
-      <div className="relative z-10 max-w-7xl mx-auto px-5 md:px-6 lg:px-8 py-6 md:py-12 lg:py-16 grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-10 lg:gap-20 items-center min-h-screen">
+      <div className="relative z-10 max-w-7xl mx-auto px-5 md:px-6 lg:px-8 py-6 md:py-12 lg:py-16 grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-10 lg:gap-20 items-center h-screen">
         {/* GAUCHE */}
         <div
           style={{ transform: `translate(${leftOffset.x}px, ${leftOffset.y}px)`, transition: isDragging ? "none" : "transform 0.2s" }}
