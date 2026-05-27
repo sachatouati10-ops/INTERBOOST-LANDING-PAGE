@@ -22,23 +22,50 @@ import {
 
 type FormStatus = "idle" | "loading" | "success" | "error";
 
-function CountUp() {
-  const [count, setCount] = useState(0);
-  const target = 523;
+const COUNT_BASELINE = 519;
+
+function useLiveCount() {
+  const [target, setTarget] = useState<number>(COUNT_BASELINE + 4);
   useEffect(() => {
-    const duration = 2000;
+    let cancelled = false;
+    const fetchCount = async () => {
+      try {
+        const res = await fetch("/api/count", { cache: "no-store" });
+        if (!res.ok) return;
+        const data = await res.json();
+        const real = typeof data?.count === "number" ? data.count : 0;
+        if (!cancelled) setTarget(COUNT_BASELINE + real);
+      } catch { /* keep previous */ }
+    };
+    fetchCount();
+    const id = setInterval(fetchCount, 60000);
+    return () => { cancelled = true; clearInterval(id); };
+  }, []);
+  return target;
+}
+
+function CountUp({ className = "" }: { className?: string }) {
+  const target = useLiveCount();
+  const [count, setCount] = useState(0);
+  const prevTarget = useRef(0);
+  useEffect(() => {
+    const from = prevTarget.current;
+    const to = target;
+    prevTarget.current = to;
+    const duration = from === 0 ? 1600 : 700;
     const startTime = Date.now();
+    let raf = 0;
     const step = () => {
       const elapsed = Date.now() - startTime;
       const progress = Math.min(elapsed / duration, 1);
       const eased = 1 - Math.pow(1 - progress, 3);
-      setCount(Math.floor(eased * target));
-      if (progress < 1) requestAnimationFrame(step);
+      setCount(Math.floor(from + (to - from) * eased));
+      if (progress < 1) raf = requestAnimationFrame(step);
     };
-    const timeout = setTimeout(() => requestAnimationFrame(step), 800);
-    return () => clearTimeout(timeout);
-  }, []);
-  return <span className="text-lg font-black bg-gradient-to-r from-violet-600 to-blue-600 bg-clip-text text-transparent">{count}</span>;
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [target]);
+  return <span className={className || "font-black bg-gradient-to-r from-violet-600 to-blue-600 bg-clip-text text-transparent"}>{count.toLocaleString("fr-FR")}</span>;
 }
 
 const jobCards = [
@@ -218,7 +245,7 @@ export default function MobilePreview() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 flex items-center justify-center p-8">
+    <div className="h-[100svh] overflow-hidden bg-slate-900 flex items-center justify-center p-4 md:p-8">
       {/* Cadre iPhone */}
       <div className="relative" style={{ width: 390, height: 844, borderRadius: 50, background: "linear-gradient(145deg, #2a2a2a, #1a1a1a, #111)", padding: 10, boxShadow: "0 30px 80px -15px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.1) inset, 0 0 0 2px rgba(0,0,0,0.5)" }}>
         <div className="absolute inset-0 rounded-[50px] pointer-events-none z-10" style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 50%)" }}/>
@@ -227,10 +254,10 @@ export default function MobilePreview() {
         <div className="absolute -left-[3px] top-[100px] w-[3px] h-[28px] rounded-r-sm" style={{ background: "linear-gradient(180deg, #444, #333)" }}/>
         <div className="absolute -left-[3px] top-[145px] w-[3px] h-[50px] rounded-r-sm" style={{ background: "linear-gradient(180deg, #444, #333)" }}/>
 
-        {/* Écran — NO SCROLL, flex vertical */}
-        <div className="w-full h-full rounded-[40px] overflow-hidden bg-gradient-to-br from-slate-50 via-white to-violet-50/30 flex flex-col">
-          {/* Fond grille */}
-          <div className="absolute inset-0 pointer-events-none rounded-[40px]" style={{ backgroundImage: "radial-gradient(circle, rgba(139,92,246,0.08) 1px, transparent 1px)", backgroundSize: "32px 32px" }}/>
+        {/* Écran — NO SCROLL, flex vertical — Option A (mesh + noise) */}
+        <div className="w-full h-full rounded-[40px] overflow-hidden bg-mesh bg-noise flex flex-col relative">
+          {/* Grille subtile par-dessus le mesh */}
+          <div className="absolute inset-0 pointer-events-none rounded-[40px] z-[1]" style={{ backgroundImage: "radial-gradient(circle, rgba(139,92,246,0.06) 1px, transparent 1px)", backgroundSize: "32px 32px" }}/>
 
           {/* Status bar + island */}
           <div className="relative z-20 flex items-center justify-between px-8 pt-[14px] pb-0 text-[12px] font-semibold text-slate-900">
@@ -260,7 +287,10 @@ export default function MobilePreview() {
               <motion.h1 initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.1 }}
                 className="text-[26px] font-extrabold tracking-tight text-slate-900 leading-[1.08] text-center mb-2.5">
                 Swipez. Postulez.<br/>
-                <span className="bg-gradient-to-r from-violet-600 via-blue-600 to-cyan-500 bg-clip-text text-transparent">Décrochez.</span>
+                <span className="bg-gradient-to-r from-violet-600 via-blue-600 to-cyan-500 bg-clip-text text-transparent">
+                  {/* === MODIF 3 — OPTION B (commentée): ajouter className="underline-handwritten" sur ce span === */}
+                  Décrochez.
+                </span>
               </motion.h1>
 
               <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}
@@ -293,20 +323,13 @@ export default function MobilePreview() {
 
                       <div className="flex items-center justify-between mb-3">
                         <p className="text-[14px] font-extrabold text-slate-900">Rejoignez l&apos;aventure</p>
-                        <div className="flex items-center gap-2">
-                          <div className="flex -space-x-1.5">
-                            {["#8b5cf6", "#3b82f6", "#06b6d4", "#f59e0b"].map((color, i) => (
-                              <motion.div key={i}
-                                initial={{ scale: 0 }} animate={{ scale: 1 }}
-                                transition={{ delay: 1 + i * 0.08, type: "spring", stiffness: 300 }}
-                                className="w-5.5 h-5.5 rounded-full border-[1.5px] border-white flex items-center justify-center text-[7px] font-bold text-white shadow-sm" style={{ background: color, zIndex: 4 - i, width: 22, height: 22 }}>{["S", "A", "M", "L"][i]}</motion.div>
-                            ))}
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <motion.div animate={{ scale: [1, 1.4, 1] }} transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
-                              className="w-1.5 h-1.5 rounded-full bg-emerald-400"/>
-                            <span className="text-[10px] font-bold text-slate-600"><CountUp /></span>
-                          </div>
+                        <div className="flex -space-x-1.5">
+                          {["#8b5cf6", "#3b82f6", "#06b6d4", "#f59e0b"].map((color, i) => (
+                            <motion.div key={i}
+                              initial={{ scale: 0 }} animate={{ scale: 1 }}
+                              transition={{ delay: 1 + i * 0.08, type: "spring", stiffness: 300 }}
+                              className="rounded-full border-[1.5px] border-white flex items-center justify-center text-[7px] font-bold text-white shadow-sm" style={{ background: color, zIndex: 4 - i, width: 22, height: 22 }}>{["S", "A", "M", "L"][i]}</motion.div>
+                          ))}
                         </div>
                       </div>
                       <form onSubmit={handleSubmit} className="flex gap-2">
@@ -329,13 +352,25 @@ export default function MobilePreview() {
                           whileTap={{ scale: 0.95 }}
                           animate={{ boxShadow: ["0 4px 15px -3px rgba(139,92,246,0.4)", "0 4px 20px -3px rgba(59,130,246,0.5)", "0 4px 15px -3px rgba(139,92,246,0.4)"] }}
                           transition={{ boxShadow: { repeat: Infinity, duration: 2, ease: "easeInOut" } }}
-                          className="px-5 py-2.5 rounded-xl font-bold text-white text-[13px] bg-gradient-to-r from-violet-600 via-blue-600 to-cyan-500 disabled:opacity-70 whitespace-nowrap shadow-lg shadow-violet-500/25"
+                          className="px-3 py-2.5 rounded-xl font-bold text-white text-[12px] bg-gradient-to-r from-violet-600 via-blue-600 to-cyan-500 disabled:opacity-70 whitespace-nowrap shadow-lg shadow-violet-500/25"
                         >
-                          {status === "loading" ? <Loader2 className="w-4 h-4 animate-spin"/> : "Rejoindre →"}
+                          {status === "loading" ? <Loader2 className="w-4 h-4 animate-spin"/> : "Je veux mon accès"}
                         </motion.button>
                       </form>
-                      {status === "error" && errorMsg && <p className="text-[10px] text-red-500 mt-1">{errorMsg}</p>}
-                      <p className="text-[9px] text-slate-400 mt-2 text-center">Accès prioritaire · Gratuit · Sans spam</p>
+
+                      {/* Compteur permanent sous le CTA */}
+                      <div className="mt-2 flex items-center justify-center gap-1.5 text-[10px] text-slate-700">
+                        <motion.span
+                          animate={{ scale: [1, 1.4, 1] }}
+                          transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+                          className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block"
+                        />
+                        Rejoignez{" "}
+                        <CountUp className="font-extrabold bg-gradient-to-r from-violet-600 to-blue-600 bg-clip-text text-transparent" />
+                        {" "}candidats déjà inscrits
+                      </div>
+
+                      {status === "error" && errorMsg && <p className="text-[10px] text-red-500 mt-1 text-center">{errorMsg}</p>}
                     </div>
                   </div>
                 </>

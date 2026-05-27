@@ -19,11 +19,68 @@
   }
 }
 
+html, body {
+  height: 100svh;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* === MODIF 3 — Option A (active par défaut): mesh gradient + grain léger === */
+.bg-mesh {
+  background-color: #ffffff;
+  background-image:
+    radial-gradient(at 12% 8%, rgba(139, 92, 246, 0.16) 0px, transparent 55%),
+    radial-gradient(at 88% 12%, rgba(59, 130, 246, 0.13) 0px, transparent 55%),
+    radial-gradient(at 78% 88%, rgba(6, 182, 212, 0.10) 0px, transparent 55%),
+    radial-gradient(at 18% 92%, rgba(168, 85, 247, 0.10) 0px, transparent 55%);
+}
+.bg-noise::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.05;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml;utf8,<svg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+}
+
+/* === MODIF 3 — Option B (commentée): trait manuscrit sous "votre job"
+   .underline-handwritten { position: relative; }
+   .underline-handwritten::after {
+     content: "";
+     position: absolute;
+     left: -4%;
+     right: -4%;
+     bottom: -8px;
+     height: 14px;
+     background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 20' fill='none'><path d='M3 12 Q 50 4, 100 10 T 197 8' stroke='%233b82f6' stroke-width='3' stroke-linecap='round'/></svg>");
+     background-repeat: no-repeat;
+     background-size: 100% 100%;
+     pointer-events: none;
+   }
+   Pour activer : ajouter className="underline-handwritten" sur le span "votre job" du titre.
+*/
+
+/* === MODIF 3 — Option C (commentée): badge "Bêta privée" flottant en haut à droite
+   <div className="fixed top-4 right-4 z-50 select-none">
+     <motion.div
+       initial={{ opacity: 0, y: -10, rotate: -8 }}
+       animate={{ opacity: 1, y: 0, rotate: [-8, -6, -8] }}
+       transition={{ rotate: { repeat: Infinity, duration: 4, ease: "easeInOut" } }}
+       className="px-3 py-1.5 rounded-xl bg-slate-900 text-white text-xs font-bold shadow-lg shadow-violet-500/20 border border-white/10"
+       style={{ transform: "rotate(-6deg)" }}
+     >
+       <span className="text-amber-300">●</span> Bêta privée
+     </motion.div>
+   </div>
+*/
 
 @keyframes gradientShift {
   0% { background-position: 0% 50%; }

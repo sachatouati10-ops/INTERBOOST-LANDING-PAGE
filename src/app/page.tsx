@@ -24,27 +24,54 @@ import {
 
 type FormStatus = "idle" | "loading" | "success" | "error";
 
-function CountUp() {
-  const [count, setCount] = useState(0);
-  const target = 523;
+const COUNT_BASELINE = 519;
+
+function useLiveCount() {
+  const [target, setTarget] = useState<number>(COUNT_BASELINE + 4);
 
   useEffect(() => {
-    let start = 0;
-    const duration = 2000;
+    let cancelled = false;
+    const fetchCount = async () => {
+      try {
+        const res = await fetch("/api/count", { cache: "no-store" });
+        if (!res.ok) return;
+        const data = await res.json();
+        const real = typeof data?.count === "number" ? data.count : 0;
+        if (!cancelled) setTarget(COUNT_BASELINE + real);
+      } catch { /* keep previous target */ }
+    };
+    fetchCount();
+    const id = setInterval(fetchCount, 60000);
+    return () => { cancelled = true; clearInterval(id); };
+  }, []);
+
+  return target;
+}
+
+function CountUp({ className = "" }: { className?: string }) {
+  const target = useLiveCount();
+  const [count, setCount] = useState(0);
+  const prevTarget = useRef(0);
+
+  useEffect(() => {
+    const from = prevTarget.current;
+    const to = target;
+    prevTarget.current = to;
+    const duration = from === 0 ? 1600 : 700;
     const startTime = Date.now();
+    let raf = 0;
     const step = () => {
       const elapsed = Date.now() - startTime;
       const progress = Math.min(elapsed / duration, 1);
       const eased = 1 - Math.pow(1 - progress, 3);
-      start = Math.floor(eased * target);
-      setCount(start);
-      if (progress < 1) requestAnimationFrame(step);
+      setCount(Math.floor(from + (to - from) * eased));
+      if (progress < 1) raf = requestAnimationFrame(step);
     };
-    const timeout = setTimeout(() => requestAnimationFrame(step), 800);
-    return () => clearTimeout(timeout);
-  }, []);
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [target]);
 
-  return <span className="text-2xl font-black bg-gradient-to-r from-violet-600 to-blue-600 bg-clip-text text-transparent">{count}</span>;
+  return <span className={className || "font-black bg-gradient-to-r from-violet-600 to-blue-600 bg-clip-text text-transparent"}>{count.toLocaleString("fr-FR")}</span>;
 }
 
 const jobCards = [
@@ -461,24 +488,26 @@ export default function LandingPage() {
   };
 
   return (
-    <main className="relative min-h-screen bg-gradient-to-br from-slate-50 via-white to-violet-50/30 overflow-hidden">
-      {/* Fond blanc avec grille animée subtile */}
-      <div className="absolute inset-0 pointer-events-none" style={{
-        backgroundImage: "radial-gradient(circle, rgba(139,92,246,0.08) 1px, transparent 1px)",
+    <main className="relative h-[100svh] overflow-hidden bg-mesh bg-noise">
+      {/* Grille subtile par-dessus le mesh */}
+      <div className="absolute inset-0 pointer-events-none z-[1]" style={{
+        backgroundImage: "radial-gradient(circle, rgba(139,92,246,0.06) 1px, transparent 1px)",
         backgroundSize: "40px 40px",
       }}/>
-      <motion.div
-        animate={{ y: [0, -40] }}
-        transition={{ repeat: Infinity, duration: 10, ease: "linear" }}
-        className="absolute inset-0 pointer-events-none opacity-40"
-        style={{
-          backgroundImage: "radial-gradient(circle, rgba(99,102,241,0.12) 1px, transparent 1px)",
-          backgroundSize: "40px 40px",
-          height: "200%",
-        }}
-      />
 
-      <div className="relative z-10 max-w-7xl mx-auto px-5 md:px-6 lg:px-8 py-6 md:py-12 lg:py-16 grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-10 lg:gap-20 items-center min-h-screen">
+      {/* === MODIF 3 — OPTION C (commentée): décommenter pour activer le badge "Bêta privée" ===
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0, rotate: [-6, -4, -6] }}
+        transition={{ rotate: { repeat: Infinity, duration: 4, ease: "easeInOut" } }}
+        className="fixed top-4 right-4 z-50 px-3 py-1.5 rounded-xl bg-slate-900 text-white text-xs font-bold shadow-lg shadow-violet-500/20 border border-white/10 select-none"
+        style={{ transform: "rotate(-6deg)" }}
+      >
+        <span className="text-amber-300 mr-1">●</span> Bêta privée
+      </motion.div>
+      */}
+
+      <div className="relative z-10 h-full max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-3 md:py-6 lg:py-10 grid grid-cols-1 lg:grid-cols-2 gap-2 md:gap-8 lg:gap-16 items-center">
         {/* GAUCHE */}
         <div
           style={{ transform: `translate(${leftOffset.x}px, ${leftOffset.y}px)`, transition: isDragging ? "none" : "transform 0.2s" }}
@@ -511,19 +540,22 @@ export default function LandingPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.1 }}
-              className="text-[38px] font-extrabold tracking-tight text-slate-900 leading-[1.08] text-center mb-3"
+              className="text-[28px] font-extrabold tracking-tight text-slate-900 leading-[1.05] text-center mb-1.5"
             >
               Swipez. Postulez.<br/>
-              <span className="bg-gradient-to-r from-violet-600 via-blue-600 to-cyan-500 bg-clip-text text-transparent">Décrochez votre job.</span>
+              <span className="bg-gradient-to-r from-violet-600 via-blue-600 to-cyan-500 bg-clip-text text-transparent">
+                {/* === MODIF 3 — OPTION B (commentée): pour activer le trait manuscrit, ajouter className="underline-handwritten" sur ce span === */}
+                Décrochez votre job.
+              </span>
             </motion.h1>
 
             <motion.p
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.35 }}
-              className="text-[15px] text-slate-900 text-center leading-relaxed px-4 mt-3 mb-2"
+              className="text-[12px] text-slate-700 text-center leading-snug px-3"
             >
-              Un swipe et l&apos;IA s&apos;occupe de tout&nbsp;: CV adapté, lettre sur-mesure et candidature envoyée.
+              Un swipe et l&apos;IA s&apos;occupe de tout&nbsp;: CV adapté, lettre sur-mesure, candidature envoyée.
             </motion.p>
           </div>
 
@@ -543,12 +575,15 @@ export default function LandingPage() {
 
             <h1 className="text-5xl lg:text-[3.5rem] font-extrabold tracking-tight text-slate-900 leading-[1.08] mb-5">
               Swipez. Postulez.{" "}
-              <span className="bg-gradient-to-r from-violet-600 via-blue-600 to-cyan-500 bg-clip-text text-transparent">Décrochez votre job.</span>
+              <span className="bg-gradient-to-r from-violet-600 via-blue-600 to-cyan-500 bg-clip-text text-transparent">
+                {/* === MODIF 3 — OPTION B (commentée): pour activer le trait manuscrit, ajouter className="underline-handwritten" sur ce span === */}
+                Décrochez votre job.
+              </span>
             </h1>
           </div>
 
           {/* 4 cartes desktop uniquement */}
-          <div className="hidden md:grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10 mt-8 max-w-lg">
+          <div className="hidden md:grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6 mt-6 max-w-lg">
             {[
               { icon: MousePointerClick, title: "Swipe = candidature", desc: "Un geste suffit pour postuler à une offre." },
               { icon: Rocket, title: "Candidature automatisée", desc: "Tout est envoyé automatiquement pour vous." },
@@ -593,18 +628,17 @@ export default function LandingPage() {
                   initial={{ opacity: 0, y: 20, scale: 0.95 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   transition={{ duration: 0.6, delay: 0.55, type: "spring", stiffness: 180 }}
-                  className="md:hidden mt-3"
+                  className="md:hidden mt-2"
                 >
 
                   {/* Input email full width */}
-                  <form onSubmit={handleSubmit} className="relative flex flex-col gap-3">
+                  <form onSubmit={handleSubmit} className="relative flex flex-col gap-2">
                     <div className="relative">
                       <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-violet-400"/>
                       {!userInteracted && ghostText && (
                         <div className="absolute inset-0 flex items-center pl-11 pr-3 pointer-events-none">
                           <span className="text-[14px] text-slate-900">{ghostText}</span>
                           <motion.span animate={{ opacity: [1, 0] }} transition={{ repeat: Infinity, duration: 0.6 }} className="w-[2px] h-4 bg-violet-500 ml-[1px]"/>
-                          <span className="ml-auto text-[9px] text-slate-900 font-medium"><CountUp /> inscrits</span>
                         </div>
                       )}
                       <input type="email" required value={email}
@@ -612,7 +646,7 @@ export default function LandingPage() {
                         onFocus={() => setUserInteracted(true)}
                         placeholder={userInteracted || ghostText ? "" : "votreadresse@email.com"}
                         aria-label="Adresse email"
-                        className="w-full pl-11 pr-4 py-3 rounded-2xl border-2 border-violet-200/60 bg-white/80 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400 text-[14px] transition-all shadow-sm"
+                        className="w-full pl-11 pr-4 py-2.5 rounded-2xl border-2 border-violet-200/60 bg-white/80 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/20 focus:border-violet-400 text-[14px] transition-all shadow-sm"
                       />
                     </div>
                     <motion.button type="submit" disabled={status === "loading"}
@@ -625,11 +659,24 @@ export default function LandingPage() {
                         ? { duration: 0.4 }
                         : { boxShadow: { repeat: Infinity, duration: 2, ease: "easeInOut" } }
                       }
-                      className="w-full py-3 rounded-2xl font-bold text-white text-[15px] bg-gradient-to-r from-violet-600 via-blue-600 to-cyan-500 disabled:opacity-70 shadow-xl shadow-violet-500/25"
+                      className="w-full py-2.5 rounded-2xl font-bold text-white text-[15px] bg-gradient-to-r from-violet-600 via-blue-600 to-cyan-500 disabled:opacity-70 shadow-xl shadow-violet-500/25"
                     >
-                      {status === "loading" ? <Loader2 className="w-5 h-5 animate-spin mx-auto"/> : "Rejoindre l'aventure"}
+                      {status === "loading" ? <Loader2 className="w-5 h-5 animate-spin mx-auto"/> : "Je veux mon accès"}
                     </motion.button>
                   </form>
+
+                  {/* Compteur permanent sous le CTA */}
+                  <div className="mt-2 flex items-center justify-center gap-1.5 text-[11px] text-slate-700">
+                    <motion.span
+                      animate={{ scale: [1, 1.4, 1] }}
+                      transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+                      className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block"
+                    />
+                    Rejoignez{" "}
+                    <CountUp className="font-extrabold bg-gradient-to-r from-violet-600 to-blue-600 bg-clip-text text-transparent" />
+                    {" "}candidats déjà inscrits
+                  </div>
+
                   {status === "error" && errorMsg && <p className="text-xs text-red-500 mt-2 text-center">{errorMsg}</p>}
 
                 </motion.div>
@@ -664,8 +711,8 @@ export default function LandingPage() {
                         transition={{ duration: 3, repeat: Infinity, repeatDelay: 8, ease: "easeInOut" }}
                       />
 
-                      <div className="relative mb-4">
-                        <p className="text-xl font-extrabold text-slate-900 mb-3 lg:text-left">Rejoignez l&apos;aventure</p>
+                      <div className="relative mb-3">
+                        <p className="text-xl font-extrabold text-slate-900 mb-2 lg:text-left">Rejoignez l&apos;aventure</p>
                         <div className="flex items-center gap-3 lg:justify-start">
                           <div className="flex -space-x-2">
                             {["#8b5cf6", "#3b82f6", "#06b6d4", "#f59e0b"].map((color, i) => (
@@ -676,11 +723,6 @@ export default function LandingPage() {
                             ))}
                             <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 1.4, type: "spring", stiffness: 300 }}
                               className="w-7 h-7 rounded-full border-2 border-white bg-slate-100 flex items-center justify-center text-[9px] font-bold text-slate-500">+</motion.div>
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            <motion.div animate={{ scale: [1, 1.4, 1] }} transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
-                              className="w-2 h-2 rounded-full bg-emerald-400"/>
-                            <span className="text-sm font-bold text-slate-700"><CountUp /> personnes attendent</span>
                           </div>
                         </div>
                       </div>
@@ -700,7 +742,7 @@ export default function LandingPage() {
                             onFocus={() => setUserInteracted(true)}
                             placeholder={userInteracted || ghostText ? "" : "votreadresse@email.com"}
                             aria-label="Adresse email"
-                            className="w-full pl-12 pr-4 py-4 rounded-xl border-2 border-violet-200 bg-violet-50/40 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-violet-500/15 focus:border-violet-400 text-base transition-all"
+                            className="w-full pl-12 pr-4 py-3 rounded-xl border-2 border-violet-200 bg-violet-50/40 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-violet-500/15 focus:border-violet-400 text-base transition-all"
                           />
                         </div>
                         <motion.button type="submit" disabled={status === "loading"}
@@ -714,11 +756,26 @@ export default function LandingPage() {
                             ? { duration: 0.4 }
                             : { boxShadow: { repeat: Infinity, duration: 2, ease: "easeInOut" } }
                           }
-                          className="px-8 py-4 rounded-xl font-bold text-white text-lg bg-gradient-to-r from-violet-600 via-blue-600 to-cyan-500 transition-all disabled:opacity-70 whitespace-nowrap"
+                          className="px-6 py-3 rounded-xl font-bold text-white text-base bg-gradient-to-r from-violet-600 via-blue-600 to-cyan-500 transition-all disabled:opacity-70 whitespace-nowrap"
                         >
-                          {status === "loading" ? <Loader2 className="w-5 h-5 animate-spin"/> : "Rejoindre →"}
+                          {status === "loading" ? <Loader2 className="w-5 h-5 animate-spin"/> : "Je veux mon accès"}
                         </motion.button>
                       </form>
+
+                      {/* Compteur permanent sous le CTA desktop */}
+                      <div className="mt-3 flex items-center gap-2 text-sm text-slate-700">
+                        <motion.span
+                          animate={{ scale: [1, 1.4, 1] }}
+                          transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+                          className="w-2 h-2 rounded-full bg-emerald-400 inline-block"
+                        />
+                        <span>
+                          Rejoignez{" "}
+                          <CountUp className="font-extrabold bg-gradient-to-r from-violet-600 to-blue-600 bg-clip-text text-transparent" />
+                          {" "}candidats déjà inscrits
+                        </span>
+                      </div>
+
                       {status === "error" && errorMsg && <p className="text-xs text-red-500 mt-2">{errorMsg}</p>}
                     </div>
                   </div>
@@ -732,7 +789,7 @@ export default function LandingPage() {
 
         {/* DROITE — iPhone */}
         <motion.div className="flex justify-center order-last lg:order-none" initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.3, type: "spring", stiffness: 120 }}>
-          <div className="relative scale-[0.55] -translate-y-[15px] -my-[180px] md:scale-100 md:my-0 md:translate-y-0 origin-center">
+          <div className="relative scale-[0.50] -my-[200px] md:scale-100 md:my-0 md:translate-y-0 origin-center">
             {/* Glow derrière le phone */}
             <div className="absolute -inset-10 rounded-full pointer-events-none" style={{
               background: "radial-gradient(ellipse at center, rgba(139,92,246,0.15) 0%, rgba(59,130,246,0.1) 40%, transparent 70%)",
