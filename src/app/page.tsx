@@ -144,7 +144,7 @@ function IPhoneApp() {
   }, [currentIndex]);
 
   useEffect(() => {
-    const id = setInterval(triggerSwipe, 1500);
+    const id = setInterval(triggerSwipe, 1000);
     return () => clearInterval(id);
   }, [triggerSwipe]);
 
